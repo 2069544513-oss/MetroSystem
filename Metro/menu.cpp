@@ -305,7 +305,7 @@ void Menu::timeMenu() {
 
 void Menu::shortestTimePath() {
     int start = readStation("请输入起始站名称或ID：");
-    int end = readStationId("请输入终点站ID：");
+    int end = readStation("请输入终点站名称或ID：");
 
     Station* ss = stationManager->getStationById(start);
     Station* es = stationManager->getStationById(end);
@@ -351,7 +351,7 @@ void Menu::shortestTimePath() {
 
 void Menu::kShortestTimePaths() {
     int start = readStation("请输入起始站名称或ID：");
-    int end = readStationId("请输入终点站ID：");
+    int end = readStation("请输入终点站名称或ID：");
 
     Station* ss = stationManager->getStationById(start);
     Station* es = stationManager->getStationById(end);
@@ -414,7 +414,7 @@ void Menu::transferMenu() {
 
 void Menu::minTransferPath() {
     int start = readStation("请输入起始站名称或ID：");
-    int end = readStationId("请输入终点站ID：");
+    int end = readStation("请输入终点站名称或ID：");
 
     Station* ss = stationManager->getStationById(start);
     Station* es = stationManager->getStationById(end);
@@ -456,7 +456,7 @@ void Menu::minTransferPath() {
 
 void Menu::kMinTransferPaths() {
     int start = readStation("请输入起始站名称或ID：");
-    int end = readStationId("请输入终点站ID：");
+    int end = readStation("请输入终点站名称或ID：");
 
     Station* ss = stationManager->getStationById(start);
     Station* es = stationManager->getStationById(end);
