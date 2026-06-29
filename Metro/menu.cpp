@@ -285,6 +285,34 @@ void Menu::queryStation() {
     }
 }
 
+void Menu::printStationSequence(const vector<int>& path) {
+    for (size_t i = 0; i < path.size(); i++) {
+        Station* s = stationManager->getStationById(path[i]);
+        if (!s) continue;
+
+        // 跳过与前一个同名站（换乘站）
+        if (i > 0) {
+            Station* prev = stationManager->getStationById(path[i - 1]);
+            if (prev && prev->name == s->name) {
+                // 更新上一行的线路信息
+                continue;
+            }
+        }
+
+        cout << "  " << (i + 1) << ". [" << s->id << "] "
+             << s->name << " (" << s->line << ")";
+
+        // 如果下一个站点同名（换乘），显示换乘线路
+        if (i + 1 < path.size()) {
+            Station* next = stationManager->getStationById(path[i + 1]);
+            if (next && next->name == s->name) {
+                cout << " -> (" << next->line << ")";
+            }
+        }
+        cout << "\n";
+    }
+}
+
 // ==================== Time Menu ====================
 
 void Menu::timeMenu() {
@@ -385,10 +413,16 @@ void Menu::kShortestTimePaths() {
             for (auto& d : details[i]) cout << "    " << d << "\n";
         }
         cout << "  站点序列: ";
-        for (size_t j = 0; j < paths[i].size(); j++) {
-            Station* s = stationManager->getStationById(paths[i][j]);
-            if (s) cout << s->name;
-            if (j < paths[i].size() - 1) cout << " → ";
+        {
+            string prevName = "";
+            for (size_t j = 0; j < paths[i].size(); j++) {
+                Station* s = stationManager->getStationById(paths[i][j]);
+                if (!s) continue;
+                if (s->name == prevName) continue;
+                if (!prevName.empty()) cout << " -> ";
+                cout << s->name;
+                prevName = s->name;
+            }
         }
         cout << "\n";
     }
@@ -491,10 +525,16 @@ void Menu::kMinTransferPaths() {
             for (auto& d : details[i]) cout << "    " << d << "\n";
         }
         cout << "  站点序列: ";
-        for (size_t j = 0; j < paths[i].size(); j++) {
-            Station* s = stationManager->getStationById(paths[i][j]);
-            if (s) cout << s->name;
-            if (j < paths[i].size() - 1) cout << " → ";
+        {
+            string prevName = "";
+            for (size_t j = 0; j < paths[i].size(); j++) {
+                Station* s = stationManager->getStationById(paths[i][j]);
+                if (!s) continue;
+                if (s->name == prevName) continue;
+                if (!prevName.empty()) cout << " -> ";
+                cout << s->name;
+                prevName = s->name;
+            }
         }
         cout << "\n";
     }

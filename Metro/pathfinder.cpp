@@ -154,13 +154,12 @@ void Pathfinder::buildPathDetail(const vector<int>& path,
         totalTime += e.time;
 
         if (e.isTransfer) {
-            // Output previous segment
             if (segmentTime > 0 && currentLine != "") {
                 Station* fromS = stationManager->getStationById(segStart);
                 Station* toS = stationManager->getStationById(u);
                 char buf[256];
                 snprintf(buf, sizeof(buf),
-                    "  乘坐 %s: %s → %s (用时 %d 分钟)",
+                    "  乘坐 %s: %s -> %s (用时 %d 分钟)",
                     currentLine.c_str(),
                     fromS ? fromS->name.c_str() : "?",
                     toS ? toS->name.c_str() : "?",
@@ -188,14 +187,13 @@ void Pathfinder::buildPathDetail(const vector<int>& path,
         }
     }
 
-    // Output last segment
     if (segmentTime > 0 && currentLine != "") {
         int last = path.back();
         Station* fromS = stationManager->getStationById(segStart);
         Station* toS = stationManager->getStationById(last);
         char buf[256];
         snprintf(buf, sizeof(buf),
-            "  乘坐 %s: %s → %s (用时 %d 分钟)",
+            "  乘坐 %s: %s -> %s (用时 %d 分钟)",
             currentLine.c_str(),
             fromS ? fromS->name.c_str() : "?",
             toS ? toS->name.c_str() : "?",
@@ -223,35 +221,16 @@ vector<int> Pathfinder::leastTransferPath(int start, int end,
     return path;
 }
 
-vector<vector<int>> Pathfinder::kShortestPaths(int start, int end, int K,
-    vector<int>& times, vector<vector<string>>& details) {
-    vector<vector<int>> result;
-    times.clear();
-    details.clear();
+// ====== K-Shortest Paths: block each edge in best path, collect, sort ======
 
-    if (K <= 0) return result;
+static void collectTimeCandidates(Graph* graph, StationManager* sm,
+    int start, int end, const vector<int>& bestPath,
+    vector<vector<int>>& paths, vector<int>& times,
+    vector<vector<string>>& details) {
+    for (size_t i = 0; i < bestPath.size() - 1 && paths.size() < 15; i++) {
+        int blockU = bestPath[i];
+        int blockV = bestPath[i + 1];
 
-    int t;
-    vector<int> p = dijkstra(start, end, t);
-    if (p.empty()) return result;
-
-    result.push_back(p);
-    times.push_back(t);
-
-    vector<string> d;
-    int tr;
-    buildPathDetail(p, d, t, tr);
-    details.push_back(d);
-
-    // Generate alternatives by removing one edge at a time from the best path
-    for (int k = 1; k < K && k < 5; k++) {
-        if (k - 1 >= (int)p.size() - 1) break;
-
-        // Bypass one intermediate node
-        int bypassIdx = k - 1;
-        if (bypassIdx >= (int)p.size() - 2) break;
-
-        int avoidNode = p[bypassIdx + 1];
         map<int, int> dist, parent;
         set<int> vis;
         priority_queue<pair<int, int>,
@@ -273,7 +252,7 @@ vector<vector<int>> Pathfinder::kShortestPaths(int start, int end, int K,
             for (int ei : it->second) {
                 const Edge& e = graph->edges[ei];
                 int v = e.to;
-                if (v == avoidNode && u == p[bypassIdx]) continue;
+                if (u == blockU && v == blockV) continue;
                 if (vis.count(v)) continue;
                 if (graph->stationOpenMap && graph->stationOpenMap->count(v)
                     && !graph->stationOpenMap->at(v)) continue;
@@ -288,60 +267,37 @@ vector<vector<int>> Pathfinder::kShortestPaths(int start, int end, int K,
         }
 
         if (dist.count(end)) {
-            vector<int> altPath;
+            vector<int> alt;
             for (int cur = end; cur != start; cur = parent[cur])
-                altPath.push_back(cur);
-            altPath.push_back(start);
-            reverse(altPath.begin(), altPath.end());
+                alt.push_back(cur);
+            alt.push_back(start);
+            reverse(alt.begin(), alt.end());
 
             bool dup = false;
-            for (auto& r : result) {
-                if (r == altPath) { dup = true; break; }
-            }
+            for (auto& p : paths) { if (p == alt) { dup = true; break; } }
             if (!dup) {
-                result.push_back(altPath);
+                paths.push_back(alt);
                 times.push_back(dist[end]);
-                vector<string> dd;
-                int trr;
-                buildPathDetail(altPath, dd, dist[end], trr);
-                details.push_back(dd);
+                vector<string> d;
+                int dummy;
+                Pathfinder pf(graph, sm);
+                pf.buildPathDetail(alt, d, dummy, dummy);
+                details.push_back(d);
             }
         }
     }
-
-    return result;
 }
 
-vector<vector<int>> Pathfinder::kLeastTransferPaths(int start, int end, int K,
-    vector<int>& transfers, vector<int>& times,
-    vector<vector<string>>& details) {
-    vector<vector<int>> result;
-    transfers.clear();
-    times.clear();
-    details.clear();
+static void collectTransferCandidates(Graph* graph, StationManager* sm,
+    int start, int end, const vector<int>& bestPath,
+    vector<vector<int>>& paths, vector<int>& transfers,
+    vector<int>& times, vector<vector<string>>& details) {
+    for (size_t i = 0; i < bestPath.size() - 1 && paths.size() < 15; i++) {
+        int blockU = bestPath[i];
+        int blockV = bestPath[i + 1];
 
-    if (K <= 0) return result;
-
-    int tr, t;
-    vector<int> p = dijkstraByTransfer(start, end, tr, t);
-    if (p.empty()) return result;
-
-    result.push_back(p);
-    transfers.push_back(tr);
-    times.push_back(t);
-
-    vector<string> d;
-    buildPathDetail(p, d, t, tr);
-    details.push_back(d);
-
-    // Generate alternatives by bypassing nodes
-    for (int k = 1; k < K && k < 5; k++) {
-        if (k - 1 >= (int)p.size() - 2) break;
-
-        int avoidNode = p[k];
         map<int, int> dist, trans, parent;
         set<int> vis;
-
         priority_queue<pair<int, int>,
             vector<pair<int, int>>,
             greater<pair<int, int>>> pq;
@@ -362,7 +318,7 @@ vector<vector<int>> Pathfinder::kLeastTransferPaths(int start, int end, int K,
             for (int ei : it->second) {
                 const Edge& e = graph->edges[ei];
                 int v = e.to;
-                if (v == avoidNode) continue;
+                if (u == blockU && v == blockV) continue;
                 if (vis.count(v)) continue;
                 if (graph->stationOpenMap && graph->stationOpenMap->count(v)
                     && !graph->stationOpenMap->at(v)) continue;
@@ -381,27 +337,110 @@ vector<vector<int>> Pathfinder::kLeastTransferPaths(int start, int end, int K,
         }
 
         if (trans.count(end)) {
-            vector<int> altPath;
+            vector<int> alt;
             for (int cur = end; cur != start; cur = parent[cur])
-                altPath.push_back(cur);
-            altPath.push_back(start);
-            reverse(altPath.begin(), altPath.end());
+                alt.push_back(cur);
+            alt.push_back(start);
+            reverse(alt.begin(), alt.end());
 
             bool dup = false;
-            for (auto& r : result) {
-                if (r == altPath) { dup = true; break; }
-            }
+            for (auto& p : paths) { if (p == alt) { dup = true; break; } }
             if (!dup) {
-                result.push_back(altPath);
+                paths.push_back(alt);
                 transfers.push_back(trans[end]);
                 times.push_back(dist[end]);
-                vector<string> dd;
-                int trr;
-                buildPathDetail(altPath, dd, dist[end], trr);
-                details.push_back(dd);
+                vector<string> d;
+                int dummy;
+                Pathfinder pf(graph, sm);
+                pf.buildPathDetail(alt, d, dummy, dummy);
+                details.push_back(d);
             }
         }
     }
+}
 
+vector<vector<int>> Pathfinder::kShortestPaths(int start, int end, int K,
+    vector<int>& times, vector<vector<string>>& details) {
+    times.clear();
+    details.clear();
+
+    if (K <= 0) return {};
+
+    int t;
+    vector<int> bestPath = dijkstra(start, end, t);
+    if (bestPath.empty()) return {};
+
+    vector<vector<int>> paths = {bestPath};
+    vector<int> tvec = {t};
+    vector<vector<string>> dvec;
+    {
+        vector<string> dd;
+        int dummy;
+        buildPathDetail(bestPath, dd, dummy, dummy);
+        dvec.push_back(dd);
+    }
+
+    collectTimeCandidates(graph, stationManager, start, end,
+                          bestPath, paths, tvec, dvec);
+
+    // Sort by time ascending
+    vector<size_t> idx(paths.size());
+    for (size_t i = 0; i < idx.size(); i++) idx[i] = i;
+    sort(idx.begin(), idx.end(), [&](size_t a, size_t b) {
+        if (tvec[a] != tvec[b]) return tvec[a] < tvec[b];
+        return paths[a].size() < paths[b].size();
+    });
+
+    vector<vector<int>> result;
+    for (size_t i = 0; i < idx.size() && (int)i < K; i++) {
+        result.push_back(paths[idx[i]]);
+        times.push_back(tvec[idx[i]]);
+        details.push_back(dvec[idx[i]]);
+    }
+    return result;
+}
+
+vector<vector<int>> Pathfinder::kLeastTransferPaths(int start, int end, int K,
+    vector<int>& transfers, vector<int>& times,
+    vector<vector<string>>& details) {
+    transfers.clear();
+    times.clear();
+    details.clear();
+
+    if (K <= 0) return {};
+
+    int tr, t;
+    vector<int> bestPath = dijkstraByTransfer(start, end, tr, t);
+    if (bestPath.empty()) return {};
+
+    vector<vector<int>> paths = {bestPath};
+    vector<int> trvec = {tr};
+    vector<int> tvec = {t};
+    vector<vector<string>> dvec;
+    {
+        vector<string> dd;
+        int dummy;
+        buildPathDetail(bestPath, dd, dummy, dummy);
+        dvec.push_back(dd);
+    }
+
+    collectTransferCandidates(graph, stationManager, start, end,
+                              bestPath, paths, trvec, tvec, dvec);
+
+    // Sort by transfers, then time
+    vector<size_t> idx(paths.size());
+    for (size_t i = 0; i < idx.size(); i++) idx[i] = i;
+    sort(idx.begin(), idx.end(), [&](size_t a, size_t b) {
+        if (trvec[a] != trvec[b]) return trvec[a] < trvec[b];
+        return tvec[a] < tvec[b];
+    });
+
+    vector<vector<int>> result;
+    for (size_t i = 0; i < idx.size() && (int)i < K; i++) {
+        result.push_back(paths[idx[i]]);
+        transfers.push_back(trvec[idx[i]]);
+        times.push_back(tvec[idx[i]]);
+        details.push_back(dvec[idx[i]]);
+    }
     return result;
 }

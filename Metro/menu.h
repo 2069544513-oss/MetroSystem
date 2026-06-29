@@ -38,6 +38,7 @@ private:
     // Helpers
     int getChoice(int minV, int maxV);
     int readStation(const std::string& prompt);
+    void printStationSequence(const std::vector<int>& path);
     void pause();
 };
 
