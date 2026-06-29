@@ -9,6 +9,7 @@ static vector<string> splitCSV(const string& line) {
     vector<string> res;
     string cur;
     for (char c : line) {
+        if (c == '\r') continue;
         if (c == ',') { res.push_back(cur); cur.clear(); }
         else cur += c;
     }
