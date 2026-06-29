@@ -2,6 +2,7 @@
 #define MENU_H
 
 #include <string>
+#include <vector>
 
 class StationManager;
 class Graph;
