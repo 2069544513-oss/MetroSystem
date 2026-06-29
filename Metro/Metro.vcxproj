@@ -134,6 +134,7 @@
     <ClCompile Include="graph.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="menu.cpp" />
+    <ClCompile Include="path_output.cpp" />
     <ClCompile Include="pathfinder.cpp" />
     <ClCompile Include="station.cpp" />
   </ItemGroup>
@@ -144,6 +145,7 @@
   <ItemGroup>
     <ClInclude Include="graph.h" />
     <ClInclude Include="menu.h" />
+    <ClInclude Include="path_output.h" />
     <ClInclude Include="pathfinder.h" />
     <ClInclude Include="station.h" />
   </ItemGroup>

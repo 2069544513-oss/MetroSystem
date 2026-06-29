@@ -11,6 +11,9 @@ class Pathfinder {
 public:
     Pathfinder(Graph* g, StationManager* sm);
 
+    Graph* getGraph() const { return graph; }
+    StationManager* getStationManager() const { return stationManager; }
+
     std::vector<int> shortestPath(int start, int end,
         int& totalTime,
         std::vector<std::string>& detail);
@@ -28,10 +31,6 @@ public:
         std::vector<int>& transfers,
         std::vector<int>& times,
         std::vector<std::vector<std::string>>& details);
-
-    void buildPathDetail(const std::vector<int>& path,
-        std::vector<std::string>& detail,
-        int& totalTime, int& transfers);
 
 private:
     Graph* graph;

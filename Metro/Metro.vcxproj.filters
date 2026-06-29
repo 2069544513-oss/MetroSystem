@@ -27,6 +27,9 @@
     <ClCompile Include="graph.cpp">
       <Filter>头文件</Filter>
     </ClCompile>
+    <ClCompile Include="path_output.cpp">
+      <Filter>头文件</Filter>
+    </ClCompile>
     <ClCompile Include="pathfinder.cpp">
       <Filter>头文件</Filter>
     </ClCompile>
@@ -47,6 +50,9 @@
       <Filter>源文件</Filter>
     </ClInclude>
     <ClInclude Include="graph.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
+    <ClInclude Include="path_output.h">
       <Filter>源文件</Filter>
     </ClInclude>
     <ClInclude Include="pathfinder.h">
