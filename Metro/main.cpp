@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <windows.h>
 #include "station.h"
 #include "graph.h"
 #include "pathfinder.h"
@@ -8,6 +9,9 @@
 using namespace std;
 
 int main() {
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
+
     ios::sync_with_stdio(false);
     cin.tie(nullptr);
 
