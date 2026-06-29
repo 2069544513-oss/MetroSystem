@@ -25,7 +25,7 @@ vector<int> Pathfinder::dijkstra(int start, int end, int& totalTime) {
     pq.push({0, start});
 
     while (!pq.empty()) {
-        auto [d, u] = pq.top(); pq.pop();
+        int d = pq.top().first; int u = pq.top().second; pq.pop();
         if (vis.count(u)) continue;
         vis.insert(u);
         if (u == end) break;
@@ -262,7 +262,7 @@ vector<vector<int>> Pathfinder::kShortestPaths(int start, int end, int K,
         pq.push({0, start});
 
         while (!pq.empty()) {
-            auto [d, u] = pq.top(); pq.pop();
+            int d = pq.top().first; int u = pq.top().second; pq.pop();
             if (vis.count(u)) continue;
             vis.insert(u);
             if (u == end) break;
