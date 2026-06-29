@@ -1,3 +1,22 @@
 node_modules/
 .DS_Store
 *.log
+
+# Visual Studio
+.vs/
+*/x64/
+*/Debug/
+*/Release/
+*.vcxproj.user
+*.user
+*.suo
+*.sdf
+*.opensdf
+*.tlog
+*.obj
+*.pch
+*.pdb
+*.ilk
+*.exe
+*.idb
+*.ipch
