@@ -35,16 +35,56 @@ void Menu::pause() {
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
 }
 
-int Menu::readStationId(const string& prompt) {
-    cout << prompt;
-    int id;
-    while (!(cin >> id)) {
-        cout << "无效ID，请重新输入：";
+int Menu::readStation(const string& prompt) {
+    while (true) {
+        cout << prompt;
+        string input;
+        getline(cin, input);
+        if (input.empty()) continue;
+
+        // 尝试作为纯数字ID解析
+        bool isNumeric = true;
+        for (char c : input) {
+            if (!isdigit(c)) { isNumeric = false; break; }
+        }
+
+        if (isNumeric) {
+            int id = stoi(input);
+            if (stationManager->getStationById(id))
+                return id;
+            cout << "未找到站点ID: " << id << "，请重新输入。\n";
+            continue;
+        }
+
+        // 按名称搜索
+        auto results = stationManager->searchStations(input);
+        if (results.empty()) {
+            cout << "未找到包含 \"" << input << "\" 的站点，请重新输入。\n";
+            continue;
+        }
+
+        if (results.size() == 1) {
+            cout << "  → " << results[0]->name
+                 << " (" << results[0]->line << ")\n";
+            return results[0]->id;
+        }
+
+        // 多个结果，让用户选择
+        cout << "找到 " << results.size() << " 个匹配站点:\n";
+        for (size_t i = 0; i < results.size(); i++) {
+            cout << "  " << (i + 1) << ". [" << results[i]->id << "] "
+                 << results[i]->name << " (" << results[i]->line << ")"
+                 << (results[i]->open ? "" : " [关闭]") << "\n";
+        }
+        cout << "请选择序号（1-" << results.size() << "）：";
+        int choice;
+        if (cin >> choice && choice >= 1 && choice <= (int)results.size()) {
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            return results[choice - 1]->id;
+        }
         cin.clear();
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
     }
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
-    return id;
 }
 
 // ==================== Station Menu ====================
@@ -89,10 +129,7 @@ void Menu::updateStationStatusByCSV() {
 }
 
 void Menu::manualUpdateStationStatus() {
-    cout << "\n请输入站点ID：";
-    int id;
-    cin >> id;
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    int id = readStation("请输入站点名称或ID：");
 
     Station* s = stationManager->getStationById(id);
     if (!s) {
@@ -267,7 +304,7 @@ void Menu::timeMenu() {
 }
 
 void Menu::shortestTimePath() {
-    int start = readStationId("请输入起始站ID：");
+    int start = readStation("请输入起始站名称或ID：");
     int end = readStationId("请输入终点站ID：");
 
     Station* ss = stationManager->getStationById(start);
@@ -313,7 +350,7 @@ void Menu::shortestTimePath() {
 }
 
 void Menu::kShortestTimePaths() {
-    int start = readStationId("请输入起始站ID：");
+    int start = readStation("请输入起始站名称或ID：");
     int end = readStationId("请输入终点站ID：");
 
     Station* ss = stationManager->getStationById(start);
@@ -376,7 +413,7 @@ void Menu::transferMenu() {
 }
 
 void Menu::minTransferPath() {
-    int start = readStationId("请输入起始站ID：");
+    int start = readStation("请输入起始站名称或ID：");
     int end = readStationId("请输入终点站ID：");
 
     Station* ss = stationManager->getStationById(start);
@@ -418,7 +455,7 @@ void Menu::minTransferPath() {
 }
 
 void Menu::kMinTransferPaths() {
-    int start = readStationId("请输入起始站ID：");
+    int start = readStation("请输入起始站名称或ID：");
     int end = readStationId("请输入终点站ID：");
 
     Station* ss = stationManager->getStationById(start);

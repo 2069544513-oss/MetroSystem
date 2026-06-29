@@ -37,7 +37,7 @@ private:
 
     // Helpers
     int getChoice(int minV, int maxV);
-    int readStationId(const std::string& prompt);
+    int readStation(const std::string& prompt);
     void pause();
 };
 
