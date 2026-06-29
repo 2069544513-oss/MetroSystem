@@ -45,7 +45,7 @@ int Menu::readStation(const string& prompt) {
         // 尝试作为纯数字ID解析
         bool isNumeric = true;
         for (char c : input) {
-            if (!isdigit(c)) { isNumeric = false; break; }
+            if (!isdigit((unsigned char)c)) { isNumeric = false; break; }
         }
 
         if (isNumeric) {
